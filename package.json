@@ -1,6 +1,6 @@
 {
   "name": "fnaf",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Freact is not a framework",
   "main": "dist/index.js",
   "scripts": {

@@ -1,5 +1,5 @@
 import { getProps, registerEvent, setAttributes } from "./modules/Attributes";
-import {
+import FreactComponent, {
   Effect,
   FreactListener,
   FreactMartial,
@@ -24,4 +24,5 @@ export {
   StringUnmarshal,
   jsx,
   jsxs,
+  FreactComponent,
 };

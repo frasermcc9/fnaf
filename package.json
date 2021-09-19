@@ -1,0 +1,11 @@
+{
+  "name": "fnaf",
+  "version": "1.0.2",
+  "description": "Freact is not a framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Fraser McCallum",
+  "license": "MIT"
+}

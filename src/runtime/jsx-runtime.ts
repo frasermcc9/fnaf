@@ -1,18 +1,18 @@
-import { setAttributes } from "../modules/Attributes";
+import EventNames from "./EventNames";
 
 export { createMultiChildElement as jsxs, createElement as jsx };
 
 function createMultiChildElement(
   type: keyof HTMLElementTagNameMap | FreactComponentConstructor,
   attr: ElementAttributes
-): FreactElement {
+): HTMLElement {
   return createElementCommon(type, attr, "multi");
 }
 
 function createElement(
   type: keyof HTMLElementTagNameMap | FreactComponentConstructor,
   attr: ElementAttributes
-): FreactElement {
+): HTMLElement {
   return createElementCommon(type, attr, "single");
 }
 
@@ -20,12 +20,12 @@ function createElementCommon(
   type: keyof HTMLElementTagNameMap | FreactComponentConstructor,
   attr: ElementAttributes,
   mode: "multi" | "single"
-): FreactElement {
+): HTMLElement {
   let thisEl: HTMLElement;
   if (typeof type === "string") {
     thisEl = document.createElement(type);
   } else {
-    thisEl = new type();
+    thisEl = new type(attr).element;
   }
 
   const { children, ...attributes } = attr;
@@ -36,46 +36,46 @@ function createElementCommon(
 
   if (mode === "multi" && children) {
     for (const child of children) {
-      if (isFreactElement(child)) {
-        const node = child.node;
-        thisEl.appendChild(node);
+      if (child instanceof HTMLElement) {
+        thisEl.appendChild(child);
       } else {
         thisEl.append(child);
       }
     }
-  } else if (children) {
-    if (isFreactElement(children)) {
-      const node = children.node;
-      thisEl.appendChild(node);
+  } else if (children != undefined) {
+    if (children instanceof HTMLElement) {
+      thisEl.appendChild(children);
     } else {
       thisEl.append(children);
     }
   }
 
-  const attributesToSet: any = {};
   for (const attribute in attributes) {
-    if (eventNames.includes(attribute.toLowerCase())) {
+    if (EventNames.includes(attribute.toLowerCase())) {
+      // Add events
       const eventName = attribute.slice(2).toLowerCase();
       thisEl.addEventListener(eventName, attributes[attribute]);
-    } else {
-      attributesToSet[attribute] = attributes[attribute];
+      continue;
+    }
+    const [isAttribute, attributeName] = isDomAttribute(attribute);
+    if (isAttribute) {
+      thisEl.setAttribute(attributeName, attributes[attribute]);
     }
   }
 
-  setAttributes(thisEl, attributesToSet);
-
-  return {
-    type,
-    attributes,
-    children: children ?? [],
-    node: thisEl,
-    marker: "FreactElement",
-  };
+  return thisEl;
 }
 
-function isFreactElement(el: any): el is FreactElement {
-  return (el as FreactElement).marker === "FreactElement";
-}
+const isDomAttribute = (attr: string): [boolean, string] => {
+  if (attr == "className") {
+    return [true, "class"];
+  }
+  if (attr.startsWith("_")) {
+    return [true, attr.slice(1)];
+  }
+
+  return [false, ""];
+};
 
 interface ElementAttributes {
   children?: FreactElement[] | any;
@@ -83,7 +83,7 @@ interface ElementAttributes {
 }
 
 interface FreactComponentConstructor {
-  new (): HTMLElement;
+  new (props: any): { element: HTMLElement };
 }
 
 export type FreactElement = {
@@ -93,20 +93,3 @@ export type FreactElement = {
   node: HTMLElement;
   marker: "FreactElement";
 };
-
-const eventNames = [
-  ...new Set(
-    [
-      ...Object.getOwnPropertyNames(document),
-      ...Object.getOwnPropertyNames(
-        Object.getPrototypeOf(Object.getPrototypeOf(document))
-      ),
-      ...Object.getOwnPropertyNames(Object.getPrototypeOf(window)),
-    ].filter(
-      (k) =>
-        k.startsWith("on") &&
-        (document[k as keyof Document] == null ||
-          typeof document[k as keyof Document] == "function")
-    )
-  ),
-];
